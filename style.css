@@ -12,7 +12,8 @@ body {
 }
 
 .container {
-    max-width: 1400px;
+    max-width: none;
+    width: 95%;
     margin: 0 auto;
     background: white;
     border-radius: 12px;
@@ -120,9 +121,11 @@ header h1 {
 .input-section {
     display: grid;
     grid-template-columns: 1fr 60px 1fr;
-    gap: 10px;
+    gap: 15px;
     background: #e9ecef;
     padding: 20px;
+    max-width: none;
+    width: 100%;
 }
 
 .diff-connector {
@@ -332,6 +335,11 @@ textarea {
     transition: all 0.3s ease;
     position: relative;
     z-index: 1;
+    /* 防止強制換行，啟用水平滾動 */
+    white-space: pre;
+    word-wrap: normal;
+    overflow-x: auto;
+    overflow-y: auto;
 }
 
 textarea:focus {
@@ -352,16 +360,19 @@ textarea.drag-over {
     position: absolute;
     left: 65px;
     right: 15px;
+    top: 15px;
     pointer-events: none;
     z-index: 0;
     font-family: 'Courier New', Courier, monospace;
     font-size: 14px;
     line-height: 20px;
-    padding: 15px;
-    white-space: pre;
+    overflow: hidden;
 }
 
 .diff-highlight-line {
+    position: absolute;
+    left: 0;
+    right: 0;
     height: 20px;
     margin: 0;
     display: block;

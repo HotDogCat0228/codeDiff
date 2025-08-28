@@ -384,17 +384,59 @@ class CodeDiffer {
         this.codeEditorLeft.classList.add('diff-mode');
         this.codeEditorRight.classList.add('diff-mode');
         
+        // 儲存差異數據供滾動時使用
+        this.currentDiff = diff;
+        
+        // 初始渲染高亮
+        this.updateInlineDiffPosition();
+        
+        // 添加滾動監聽器來更新高亮位置
+        this.addDiffScrollListeners();
+    }
+
+    // 新增：添加滾動監聽器
+    addDiffScrollListeners() {
+        // 移除之前的監聽器（如果存在）
+        if (this.diffScrollHandler) {
+            this.codeLeft.removeEventListener('scroll', this.diffScrollHandler);
+            this.codeRight.removeEventListener('scroll', this.diffScrollHandler);
+        }
+        
+        // 創建新的滾動處理器
+        this.diffScrollHandler = () => {
+            this.updateInlineDiffPosition();
+        };
+        
+        // 添加滾動監聽器
+        this.codeLeft.addEventListener('scroll', this.diffScrollHandler);
+        this.codeRight.addEventListener('scroll', this.diffScrollHandler);
+    }
+
+    // 新增：更新內聯差異高亮位置
+    updateInlineDiffPosition() {
+        if (!this.currentDiff) return;
+        
+        // 清除現有高亮
+        this.diffHighlightLeft.innerHTML = '';
+        this.diffHighlightRight.innerHTML = '';
+        
+        // 獲取當前滾動位置
+        const leftScrollTop = this.codeLeft.scrollTop;
+        const rightScrollTop = this.codeRight.scrollTop;
+        
         // 為左側創建高亮
-        diff.left.forEach(line => {
+        this.currentDiff.left.forEach((line, index) => {
             const highlightDiv = document.createElement('div');
             highlightDiv.className = `diff-highlight-line ${line.type}`;
+            highlightDiv.style.top = `${(index * 20) - leftScrollTop}px`;
             this.diffHighlightLeft.appendChild(highlightDiv);
         });
         
         // 為右側創建高亮
-        diff.right.forEach(line => {
+        this.currentDiff.right.forEach((line, index) => {
             const highlightDiv = document.createElement('div');
             highlightDiv.className = `diff-highlight-line ${line.type}`;
+            highlightDiv.style.top = `${(index * 20) - rightScrollTop}px`;
             this.diffHighlightRight.appendChild(highlightDiv);
         });
     }
@@ -451,6 +493,16 @@ class CodeDiffer {
         this.diffConnector.innerHTML = '';
         this.codeEditorLeft.classList.remove('diff-mode');
         this.codeEditorRight.classList.remove('diff-mode');
+        
+        // 清除差異數據
+        this.currentDiff = null;
+        
+        // 移除滾動監聽器
+        if (this.diffScrollHandler) {
+            this.codeLeft.removeEventListener('scroll', this.diffScrollHandler);
+            this.codeRight.removeEventListener('scroll', this.diffScrollHandler);
+            this.diffScrollHandler = null;
+        }
     }
 
     displaySideDiff(lines, container) {
