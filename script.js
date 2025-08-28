@@ -49,6 +49,7 @@ class CodeDiffer {
         document.getElementById('copyRight').addEventListener('click', () => this.copyCode('right'));
         document.getElementById('copyPanelLeft').addEventListener('click', () => this.copyCode('left'));
         document.getElementById('copyPanelRight').addEventListener('click', () => this.copyCode('right'));
+        document.getElementById('toggleWheelSync').addEventListener('click', () => this.handleToggleWheelSync());
         document.getElementById('clearLeft').addEventListener('click', () => this.clearCode('left'));
         document.getElementById('clearRight').addEventListener('click', () => this.clearCode('right'));
         document.getElementById('clearBoth').addEventListener('click', () => this.clearCode('both'));
@@ -65,6 +66,9 @@ class CodeDiffer {
         
         // 差異複製按鈕事件（延遲綁定，因為這些按鈕在比對後才出現）
         this.setupDiffCopyButtons();
+        
+        // 新增：設置滾輪同步滾動
+        this.setupWheelSync();
     }
 
     updateLineNumbers(side = 'both') {
@@ -102,12 +106,22 @@ class CodeDiffer {
     }
 
     syncScroll(source) {
+        // 如果正在進行滾輪同步，則跳過常規的滾動同步
+        if (this.isWheelSyncing) {
+            return;
+        }
+
         const sourceElement = source === 'left' ? this.codeLeft : this.codeRight;
         const targetElement = source === 'left' ? this.codeRight : this.codeLeft;
         const sourceLineNumbers = source === 'left' ? this.lineNumbersLeft : this.lineNumbersRight;
         const targetLineNumbers = source === 'left' ? this.lineNumbersRight : this.lineNumbersLeft;
 
-        targetElement.scrollTop = sourceElement.scrollTop;
+        // 如果啟用了滾輪同步，則同步滾動到目標元素
+        if (this.wheelSyncEnabled) {
+            targetElement.scrollTop = sourceElement.scrollTop;
+        }
+        
+        // 始終同步行號滾動
         targetLineNumbers.scrollTop = sourceElement.scrollTop;
         sourceLineNumbers.scrollTop = sourceElement.scrollTop;
     }
@@ -745,11 +759,109 @@ class CodeDiffer {
         if (copyDiffPanelLeft) copyDiffPanelLeft.addEventListener('click', () => this.copyDiff('left'));
         if (copyDiffPanelRight) copyDiffPanelRight.addEventListener('click', () => this.copyDiff('right'));
     }
+
+    // 新增：設置滾輪同步滾動
+    setupWheelSync() {
+        // 防止重複綁定的標記
+        this.wheelSyncEnabled = true;
+        this.isWheelSyncing = false;
+
+        // 為左側文本框添加滾輪事件
+        this.codeLeft.addEventListener('wheel', (e) => {
+            if (this.wheelSyncEnabled && !this.isWheelSyncing) {
+                this.handleWheelSync(e, 'left');
+            }
+        }, { passive: false });
+
+        // 為右側文本框添加滾輪事件
+        this.codeRight.addEventListener('wheel', (e) => {
+            if (this.wheelSyncEnabled && !this.isWheelSyncing) {
+                this.handleWheelSync(e, 'right');
+            }
+        }, { passive: false });
+
+        // 為行號區域也添加滾輪事件
+        this.lineNumbersLeft.addEventListener('wheel', (e) => {
+            if (this.wheelSyncEnabled && !this.isWheelSyncing) {
+                this.handleWheelSync(e, 'left');
+            }
+        }, { passive: false });
+
+        this.lineNumbersRight.addEventListener('wheel', (e) => {
+            if (this.wheelSyncEnabled && !this.isWheelSyncing) {
+                this.handleWheelSync(e, 'right');
+            }
+        }, { passive: false });
+    }
+
+    // 新增：處理滾輪同步滾動
+    handleWheelSync(e, source) {
+        // 阻止默認滾動行為
+        e.preventDefault();
+        
+        // 設置同步標記，防止無限循環
+        this.isWheelSyncing = true;
+
+        // 計算滾動距離
+        const deltaY = e.deltaY;
+        const scrollSpeed = 1; // 滾動速度倍率
+
+        // 同時滾動兩邊的文本框
+        this.codeLeft.scrollTop += deltaY * scrollSpeed;
+        this.codeRight.scrollTop += deltaY * scrollSpeed;
+
+        // 同步行號滾動
+        this.lineNumbersLeft.scrollTop = this.codeLeft.scrollTop;
+        this.lineNumbersRight.scrollTop = this.codeRight.scrollTop;
+
+        // 短暫延遲後重置同步標記
+        setTimeout(() => {
+            this.isWheelSyncing = false;
+        }, 10);
+    }
+
+    // 新增：切換滾輪同步功能
+    toggleWheelSync() {
+        this.wheelSyncEnabled = !this.wheelSyncEnabled;
+        return this.wheelSyncEnabled;
+    }
+
+    // 新增：處理切換滾輪同步按鈕
+    handleToggleWheelSync() {
+        const enabled = this.toggleWheelSync();
+        const button = document.getElementById('toggleWheelSync');
+        
+        if (enabled) {
+            button.classList.remove('disabled');
+            button.classList.add('btn-success');
+            button.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 3v18m9-9H3"></path>
+                </svg>
+                同步滾動
+            `;
+            button.title = '滾輪同步已啟用，點擊關閉';
+            this.showToast('滾輪同步滾動已啟用');
+        } else {
+            button.classList.add('disabled');
+            button.classList.remove('btn-success');
+            button.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 3v18m9-9H3"></path>
+                </svg>
+                獨立滾動
+            `;
+            button.title = '滾輪同步已關閉，點擊開啟';
+            this.showToast('滾輪同步滾動已關閉', 'error');
+        }
+    }
 }
 
 // 初始化應用程式
 document.addEventListener('DOMContentLoaded', () => {
-    new CodeDiffer();
+    const differ = new CodeDiffer();
+    // 將實例保存到全局，以便鍵盤快捷鍵使用
+    window.currentDiffer = differ;
 });
 
 // 一些示例程式碼可以用來測試
@@ -804,6 +916,15 @@ document.addEventListener('keydown', (e) => {
             e.preventDefault();
             const differ = new CodeDiffer();
             differ.copyCode('right');
+        }
+    }
+    
+    // Ctrl/Cmd + Shift + S 切換滾輪同步
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        // 獲取當前的 CodeDiffer 實例（如果存在）
+        if (window.currentDiffer) {
+            window.currentDiffer.handleToggleWheelSync();
         }
     }
 });

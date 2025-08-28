@@ -72,6 +72,28 @@ header h1 {
     background: #138496;
 }
 
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-success.disabled {
+    background: #6c757d;
+    opacity: 0.6;
+}
+
+.btn-success svg {
+    transition: transform 0.3s ease;
+}
+
+.btn-success.disabled svg {
+    transform: rotate(45deg);
+}
+
 .btn-sm {
     padding: 6px 12px;
     font-size: 12px;
