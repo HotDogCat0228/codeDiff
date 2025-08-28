@@ -255,6 +255,8 @@ header h1 {
     border-right: 1px solid #dee2e6;
     min-width: 50px;
     user-select: none;
+    white-space: pre-line;
+    overflow: hidden;
 }
 
 textarea {
