@@ -38,6 +38,10 @@ class CodeDiffer {
         this.codeRight.addEventListener('scroll', () => this.syncScroll('right'));
 
         // 按鈕事件
+        document.getElementById('copyLeft').addEventListener('click', () => this.copyCode('left'));
+        document.getElementById('copyRight').addEventListener('click', () => this.copyCode('right'));
+        document.getElementById('copyPanelLeft').addEventListener('click', () => this.copyCode('left'));
+        document.getElementById('copyPanelRight').addEventListener('click', () => this.copyCode('right'));
         document.getElementById('clearLeft').addEventListener('click', () => this.clearCode('left'));
         document.getElementById('clearRight').addEventListener('click', () => this.clearCode('right'));
         document.getElementById('clearBoth').addEventListener('click', () => this.clearCode('both'));
@@ -51,6 +55,9 @@ class CodeDiffer {
         
         // 拖拽功能
         this.setupDragAndDrop();
+        
+        // 差異複製按鈕事件（延遲綁定，因為這些按鈕在比對後才出現）
+        this.setupDiffCopyButtons();
     }
 
     updateLineNumbers(side = 'both') {
@@ -438,6 +445,125 @@ class CodeDiffer {
         const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
         return textExtensions.includes(extension);
     }
+
+    // 複製功能
+    async copyCode(side) {
+        try {
+            const code = side === 'left' ? this.codeLeft.value : this.codeRight.value;
+            
+            if (!code.trim()) {
+                this.showToast('沒有程式碼可複製', 'error');
+                return;
+            }
+
+            await navigator.clipboard.writeText(code);
+            const sideName = side === 'left' ? '左側' : '右側';
+            this.showToast(`${sideName}程式碼已複製到剪貼簿`);
+        } catch (err) {
+            console.error('複製失敗:', err);
+            this.showToast('複製失敗，請重試', 'error');
+        }
+    }
+
+    // 複製差異結果
+    async copyDiff(type) {
+        try {
+            let content = '';
+            
+            if (type === 'left') {
+                content = this.getDiffContent('left');
+            } else if (type === 'right') {
+                content = this.getDiffContent('right');
+            } else if (type === 'both') {
+                const leftContent = this.getDiffContent('left');
+                const rightContent = this.getDiffContent('right');
+                content = `=== 程式碼 A ===\n${leftContent}\n\n=== 程式碼 B ===\n${rightContent}`;
+            }
+
+            if (!content.trim()) {
+                this.showToast('沒有差異內容可複製', 'error');
+                return;
+            }
+
+            await navigator.clipboard.writeText(content);
+            
+            const typeName = type === 'left' ? '左側差異' : 
+                           type === 'right' ? '右側差異' : '完整差異';
+            this.showToast(`${typeName}已複製到剪貼簿`);
+        } catch (err) {
+            console.error('複製差異失敗:', err);
+            this.showToast('複製失敗，請重試', 'error');
+        }
+    }
+
+    // 獲取差異內容的純文字版本
+    getDiffContent(side) {
+        const container = side === 'left' ? this.diffLeft : this.diffRight;
+        const lines = container.querySelectorAll('.diff-line');
+        const content = [];
+
+        lines.forEach(line => {
+            const lineNumber = line.querySelector('.diff-line-number').textContent;
+            const lineContent = line.querySelector('.diff-line-content').textContent;
+            const type = line.classList.contains('added') ? '+' :
+                        line.classList.contains('removed') ? '-' :
+                        line.classList.contains('modified') ? '~' : ' ';
+            
+            if (lineNumber !== '-' && lineContent.trim()) {
+                content.push(`${type}${lineNumber.padStart(4)}: ${lineContent}`);
+            }
+        });
+
+        return content.join('\n');
+    }
+
+    // 顯示複製成功/失敗的提示
+    showToast(message, type = 'success') {
+        // 移除之前的提示
+        const existingToast = document.querySelector('.copy-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `copy-toast ${type === 'error' ? 'error' : ''}`;
+        
+        const icon = type === 'error' ? 
+            `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>` :
+            `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20,6 9,17 4,12"></polyline>
+            </svg>`;
+
+        toast.innerHTML = `${icon}<span>${message}</span>`;
+        document.body.appendChild(toast);
+
+        // 3秒後自動移除
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 3000);
+    }
+
+    // 設置差異複製按鈕
+    setupDiffCopyButtons() {
+        // 這些按鈕在頁面載入時就存在
+        const copyDiffLeft = document.getElementById('copyDiffLeft');
+        const copyDiffRight = document.getElementById('copyDiffRight');
+        const copyDiffBoth = document.getElementById('copyDiffBoth');
+        const copyDiffPanelLeft = document.getElementById('copyDiffPanelLeft');
+        const copyDiffPanelRight = document.getElementById('copyDiffPanelRight');
+
+        if (copyDiffLeft) copyDiffLeft.addEventListener('click', () => this.copyDiff('left'));
+        if (copyDiffRight) copyDiffRight.addEventListener('click', () => this.copyDiff('right'));
+        if (copyDiffBoth) copyDiffBoth.addEventListener('click', () => this.copyDiff('both'));
+        if (copyDiffPanelLeft) copyDiffPanelLeft.addEventListener('click', () => this.copyDiff('left'));
+        if (copyDiffPanelRight) copyDiffPanelRight.addEventListener('click', () => this.copyDiff('right'));
+    }
 }
 
 // 初始化應用程式
@@ -479,6 +605,24 @@ alert(message);`;
     document.getElementById('codeLeft').value = sampleLeft;
     document.getElementById('codeRight').value = sampleRight;
     
+    // 創建新的 CodeDiffer 實例來更新行號
     const differ = new CodeDiffer();
     differ.updateLineNumbers();
 };
+
+// 添加鍵盤快捷鍵支援
+document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + C 複製當前焦點的代碼區域
+    if ((e.ctrlKey || e.metaKey) && e.key === 'c' && !e.shiftKey) {
+        const activeElement = document.activeElement;
+        if (activeElement && activeElement.id === 'codeLeft') {
+            e.preventDefault();
+            const differ = new CodeDiffer();
+            differ.copyCode('left');
+        } else if (activeElement && activeElement.id === 'codeRight') {
+            e.preventDefault();
+            const differ = new CodeDiffer();
+            differ.copyCode('right');
+        }
+    }
+});

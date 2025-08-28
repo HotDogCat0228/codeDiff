@@ -11,6 +11,8 @@
         <header>
             <h1>程式碼比對工具</h1>
             <div class="controls">
+                <button id="copyLeft" class="btn btn-info">複製左側</button>
+                <button id="copyRight" class="btn btn-info">複製右側</button>
                 <button id="clearLeft" class="btn btn-secondary">清除左側</button>
                 <button id="clearRight" class="btn btn-secondary">清除右側</button>
                 <button id="clearBoth" class="btn btn-danger">清除全部</button>
@@ -20,7 +22,15 @@
 
         <div class="input-section">
             <div class="code-panel">
-                <h3>程式碼 A</h3>
+                <div class="panel-header">
+                    <h3>程式碼 A</h3>
+                    <button class="copy-panel-btn" id="copyPanelLeft" title="複製此面板的程式碼">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                </div>
                 <div class="file-upload-section">
                     <input type="file" id="fileInputLeft" accept=".js,.ts,.jsx,.tsx,.html,.css,.scss,.less,.py,.java,.cpp,.c,.h,.php,.rb,.go,.rs,.swift,.kt,.scala,.sh,.sql,.json,.xml,.yaml,.yml,.md,.txt" />
                     <label for="fileInputLeft" class="file-upload-btn">
@@ -43,7 +53,15 @@
             </div>
             
             <div class="code-panel">
-                <h3>程式碼 B</h3>
+                <div class="panel-header">
+                    <h3>程式碼 B</h3>
+                    <button class="copy-panel-btn" id="copyPanelRight" title="複製此面板的程式碼">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                </div>
                 <div class="file-upload-section">
                     <input type="file" id="fileInputRight" accept=".js,.ts,.jsx,.tsx,.html,.css,.scss,.less,.py,.java,.cpp,.c,.h,.php,.rb,.go,.rs,.swift,.kt,.scala,.sh,.sql,.json,.xml,.yaml,.yml,.md,.txt" />
                     <label for="fileInputRight" class="file-upload-btn">
@@ -89,14 +107,37 @@
         </div>
 
         <div class="diff-section" id="diffSection" style="display: none;">
-            <h3>差異比對結果</h3>
+            <div class="section-header">
+                <h3>差異比對結果</h3>
+                <div class="diff-controls">
+                    <button id="copyDiffLeft" class="btn btn-sm btn-info">複製左側差異</button>
+                    <button id="copyDiffRight" class="btn btn-sm btn-info">複製右側差異</button>
+                    <button id="copyDiffBoth" class="btn btn-sm btn-primary">複製完整差異</button>
+                </div>
+            </div>
             <div class="diff-container">
                 <div class="diff-panel">
-                    <h4>程式碼 A</h4>
+                    <div class="panel-header">
+                        <h4>程式碼 A</h4>
+                        <button class="copy-diff-panel-btn" id="copyDiffPanelLeft" title="複製此面板的差異">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                        </button>
+                    </div>
                     <div class="diff-content" id="diffLeft"></div>
                 </div>
                 <div class="diff-panel">
-                    <h4>程式碼 B</h4>
+                    <div class="panel-header">
+                        <h4>程式碼 B</h4>
+                        <button class="copy-diff-panel-btn" id="copyDiffPanelRight" title="複製此面板的差異">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                        </button>
+                    </div>
                     <div class="diff-content" id="diffRight"></div>
                 </div>
             </div>

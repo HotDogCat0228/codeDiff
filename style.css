@@ -63,6 +63,20 @@ header h1 {
     background: #218838;
 }
 
+.btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #138496;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
 .btn-secondary {
     background: #6c757d;
     color: white;
@@ -93,10 +107,57 @@ header h1 {
     padding: 20px;
 }
 
-.code-panel h3 {
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 15px;
+}
+
+.panel-header h3,
+.panel-header h4 {
+    margin: 0;
     color: #495057;
+}
+
+.panel-header h3 {
     font-size: 18px;
+}
+
+.panel-header h4 {
+    font-size: 16px;
+}
+
+.copy-panel-btn,
+.copy-diff-panel-btn {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+}
+
+.copy-panel-btn:hover,
+.copy-diff-panel-btn:hover {
+    background: #138496;
+    opacity: 1;
+    transform: translateY(-1px);
+}
+
+.copy-panel-btn svg,
+.copy-diff-panel-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.copy-diff-panel-btn svg {
+    width: 14px;
+    height: 14px;
 }
 
 .file-upload-section {
@@ -283,9 +344,24 @@ textarea.drag-over {
     padding: 20px 30px;
 }
 
-.diff-section h3 {
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.section-header h3 {
+    margin: 0;
     color: #495057;
+}
+
+.diff-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .diff-container {
@@ -380,6 +456,33 @@ textarea.drag-over {
     .stats-grid {
         grid-template-columns: 1fr;
     }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .diff-controls {
+        justify-content: center;
+    }
+    
+    .panel-header {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .file-upload-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .copy-toast {
+        right: 10px;
+        left: 10px;
+        top: 10px;
+    }
 }
 
 /* 滾動條樣式 */
@@ -403,4 +506,52 @@ textarea::-webkit-scrollbar-thumb,
 textarea::-webkit-scrollbar-thumb:hover,
 .diff-content::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+/* 複製成功提示 */
+.copy-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s;
+}
+
+.copy-toast.error {
+    background: #dc3545;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.copy-toast svg {
+    width: 16px;
+    height: 16px;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
 }
