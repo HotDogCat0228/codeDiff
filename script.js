@@ -26,6 +26,13 @@ class CodeDiffer {
         this.fileNameRight = document.getElementById('fileNameRight');
         this.clearFileLeft = document.getElementById('clearFileLeft');
         this.clearFileRight = document.getElementById('clearFileRight');
+        
+        // 內聯差異顯示元素
+        this.diffHighlightLeft = document.getElementById('diffHighlightLeft');
+        this.diffHighlightRight = document.getElementById('diffHighlightRight');
+        this.diffConnector = document.getElementById('diffConnector');
+        this.codeEditorLeft = document.getElementById('codeEditorLeft');
+        this.codeEditorRight = document.getElementById('codeEditorRight');
     }
 
     attachEventListeners() {
@@ -119,11 +126,14 @@ class CodeDiffer {
         if (side === 'both') {
             this.hideResults();
         }
+        // 清除內聯差異顯示
+        this.clearDiffDisplay();
     }
 
     hideResults() {
         this.statsSection.style.display = 'none';
         this.diffSection.style.display = 'none';
+        this.clearDiffDisplay();
     }
 
     compareCode() {
@@ -200,6 +210,7 @@ class CodeDiffer {
         let rightIndex = 0;
         let lcsIndex = 0;
 
+        // 改進的差異算法，更準確地識別修改、新增和刪除
         while (leftIndex < leftLines.length || rightIndex < rightLines.length) {
             const nextLcs = lcs[lcsIndex];
 
@@ -219,59 +230,213 @@ class CodeDiffer {
                 leftIndex++;
                 rightIndex++;
                 lcsIndex++;
-            } else if (leftIndex < leftLines.length && rightIndex < rightLines.length) {
-                // 可能是修改的行
-                diff.left.push({
-                    lineNumber: leftIndex + 1,
-                    content: leftLines[leftIndex],
-                    type: 'modified'
-                });
-                diff.right.push({
-                    lineNumber: rightIndex + 1,
-                    content: rightLines[rightIndex],
-                    type: 'modified'
-                });
-                diff.stats.modified++;
-                leftIndex++;
-                rightIndex++;
-            } else if (leftIndex < leftLines.length) {
-                // 刪除的行
-                diff.left.push({
-                    lineNumber: leftIndex + 1,
-                    content: leftLines[leftIndex],
-                    type: 'removed'
-                });
-                diff.right.push({
-                    lineNumber: '-',
-                    content: '',
-                    type: 'context'
-                });
-                diff.stats.removed++;
-                leftIndex++;
-            } else if (rightIndex < rightLines.length) {
-                // 新增的行
-                diff.left.push({
-                    lineNumber: '-',
-                    content: '',
-                    type: 'context'
-                });
-                diff.right.push({
-                    lineNumber: rightIndex + 1,
-                    content: rightLines[rightIndex],
-                    type: 'added'
-                });
-                diff.stats.added++;
-                rightIndex++;
+            } else {
+                // 檢查是否為純新增
+                if (leftIndex >= leftLines.length) {
+                    diff.left.push({
+                        lineNumber: '-',
+                        content: '',
+                        type: 'context'
+                    });
+                    diff.right.push({
+                        lineNumber: rightIndex + 1,
+                        content: rightLines[rightIndex],
+                        type: 'added'
+                    });
+                    diff.stats.added++;
+                    rightIndex++;
+                } 
+                // 檢查是否為純刪除
+                else if (rightIndex >= rightLines.length) {
+                    diff.left.push({
+                        lineNumber: leftIndex + 1,
+                        content: leftLines[leftIndex],
+                        type: 'removed'
+                    });
+                    diff.right.push({
+                        lineNumber: '-',
+                        content: '',
+                        type: 'context'
+                    });
+                    diff.stats.removed++;
+                    leftIndex++;
+                } 
+                // 檢查是否可能為修改
+                else {
+                    // 向前查看，確定是修改還是新增/刪除
+                    const similarity = this.calculateLineSimilarity(leftLines[leftIndex], rightLines[rightIndex]);
+                    
+                    if (similarity > 0.3) { // 如果相似度超過30%，認為是修改
+                        diff.left.push({
+                            lineNumber: leftIndex + 1,
+                            content: leftLines[leftIndex],
+                            type: 'modified'
+                        });
+                        diff.right.push({
+                            lineNumber: rightIndex + 1,
+                            content: rightLines[rightIndex],
+                            type: 'modified'
+                        });
+                        diff.stats.modified++;
+                        leftIndex++;
+                        rightIndex++;
+                    } else {
+                        // 檢查下一個 LCS 匹配來決定是新增還是刪除
+                        const nextLeftMatch = this.findNextLCSMatch(lcs, lcsIndex, leftIndex, 'left');
+                        const nextRightMatch = this.findNextLCSMatch(lcs, lcsIndex, rightIndex, 'right');
+                        
+                        if (nextLeftMatch < nextRightMatch) {
+                            // 左側先匹配，當前行是刪除
+                            diff.left.push({
+                                lineNumber: leftIndex + 1,
+                                content: leftLines[leftIndex],
+                                type: 'removed'
+                            });
+                            diff.right.push({
+                                lineNumber: '-',
+                                content: '',
+                                type: 'context'
+                            });
+                            diff.stats.removed++;
+                            leftIndex++;
+                        } else {
+                            // 右側先匹配，當前行是新增
+                            diff.left.push({
+                                lineNumber: '-',
+                                content: '',
+                                type: 'context'
+                            });
+                            diff.right.push({
+                                lineNumber: rightIndex + 1,
+                                content: rightLines[rightIndex],
+                                type: 'added'
+                            });
+                            diff.stats.added++;
+                            rightIndex++;
+                        }
+                    }
+                }
             }
         }
 
         return diff;
     }
 
+    // 新增：計算兩行代碼的相似度
+    calculateLineSimilarity(line1, line2) {
+        if (!line1 || !line2) return 0;
+        
+        const words1 = line1.trim().split(/\s+/);
+        const words2 = line2.trim().split(/\s+/);
+        
+        if (words1.length === 0 && words2.length === 0) return 1;
+        if (words1.length === 0 || words2.length === 0) return 0;
+        
+        const commonWords = words1.filter(word => words2.includes(word));
+        return commonWords.length * 2 / (words1.length + words2.length);
+    }
+
+    // 新增：找到下一個 LCS 匹配
+    findNextLCSMatch(lcs, currentIndex, lineIndex, side) {
+        for (let i = currentIndex; i < lcs.length; i++) {
+            if (side === 'left' && lcs[i].left >= lineIndex) {
+                return lcs[i].left - lineIndex;
+            }
+            if (side === 'right' && lcs[i].right >= lineIndex) {
+                return lcs[i].right - lineIndex;
+            }
+        }
+        return Infinity;
+    }
+
     displayDiff(diff) {
+        // 顯示傳統的底部差異結果
         this.displaySideDiff(diff.left, this.diffLeft);
         this.displaySideDiff(diff.right, this.diffRight);
         this.updateStats(diff.stats);
+        
+        // 新增：內聯差異顯示
+        this.displayInlineDiff(diff);
+        this.createDiffConnectors(diff);
+    }
+
+    // 新增：內聯差異顯示方法
+    displayInlineDiff(diff) {
+        // 清除之前的高亮
+        this.diffHighlightLeft.innerHTML = '';
+        this.diffHighlightRight.innerHTML = '';
+        
+        // 啟用差異模式
+        this.codeEditorLeft.classList.add('diff-mode');
+        this.codeEditorRight.classList.add('diff-mode');
+        
+        // 為左側創建高亮
+        diff.left.forEach(line => {
+            const highlightDiv = document.createElement('div');
+            highlightDiv.className = `diff-highlight-line ${line.type}`;
+            this.diffHighlightLeft.appendChild(highlightDiv);
+        });
+        
+        // 為右側創建高亮
+        diff.right.forEach(line => {
+            const highlightDiv = document.createElement('div');
+            highlightDiv.className = `diff-highlight-line ${line.type}`;
+            this.diffHighlightRight.appendChild(highlightDiv);
+        });
+    }
+
+    // 新增：創建連接線
+    createDiffConnectors(diff) {
+        // 清除之前的連接線
+        this.diffConnector.innerHTML = '';
+        
+        let leftIndex = 0;
+        let rightIndex = 0;
+        
+        // 計算需要連接的行
+        for (let i = 0; i < Math.max(diff.left.length, diff.right.length); i++) {
+            const leftLine = diff.left[i];
+            const rightLine = diff.right[i];
+            
+            if (leftLine && rightLine) {
+                // 如果兩邊都有行，檢查是否需要連接線
+                if (leftLine.type !== 'unchanged' || rightLine.type !== 'unchanged') {
+                    this.createConnectorLine(i, leftLine.type, rightLine.type);
+                }
+            }
+        }
+    }
+
+    // 新增：創建單個連接線
+    createConnectorLine(lineIndex, leftType, rightType) {
+        const connector = document.createElement('div');
+        connector.className = 'diff-line-connector visible';
+        
+        // 根據差異類型設置顏色
+        if (leftType === 'removed' && rightType === 'added') {
+            connector.style.background = 'linear-gradient(90deg, #dc3545 0%, #28a745 100%)';
+        } else if (leftType === 'modified' || rightType === 'modified') {
+            connector.style.background = '#ffc107';
+        } else if (leftType === 'added' || rightType === 'added') {
+            connector.style.background = '#28a745';
+        } else if (leftType === 'removed' || rightType === 'removed') {
+            connector.style.background = '#dc3545';
+        }
+        
+        // 計算連接線的位置
+        const topOffset = 80 + (lineIndex * 20); // 80px 是面板標題的高度
+        connector.style.top = `${topOffset}px`;
+        
+        this.diffConnector.appendChild(connector);
+    }
+
+    // 修改：清除差異顯示
+    clearDiffDisplay() {
+        this.diffHighlightLeft.innerHTML = '';
+        this.diffHighlightRight.innerHTML = '';
+        this.diffConnector.innerHTML = '';
+        this.codeEditorLeft.classList.remove('diff-mode');
+        this.codeEditorRight.classList.remove('diff-mode');
     }
 
     displaySideDiff(lines, container) {

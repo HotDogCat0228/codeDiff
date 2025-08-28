@@ -97,9 +97,33 @@ header h1 {
 
 .input-section {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1px;
+    grid-template-columns: 1fr 60px 1fr;
+    gap: 10px;
     background: #e9ecef;
+    padding: 20px;
+}
+
+.diff-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 80px;
+    position: relative;
+}
+
+.diff-line-connector {
+    position: absolute;
+    height: 2px;
+    background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #28a745 100%);
+    width: 50px;
+    border-radius: 2px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.diff-line-connector.visible {
+    opacity: 1;
 }
 
 .code-panel {
@@ -280,10 +304,12 @@ textarea {
     font-size: 14px;
     line-height: 20px;
     resize: none;
-    min-height: 300px;
+    min-height: 400px;
     background: transparent;
     color: #495057;
     transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
 }
 
 textarea:focus {
@@ -293,6 +319,45 @@ textarea:focus {
 textarea.drag-over {
     background: #e3f2fd !important;
     border-color: #2196f3 !important;
+}
+
+/* 內聯差異高亮樣式 */
+.code-editor.diff-mode {
+    position: relative;
+}
+
+.diff-highlight {
+    position: absolute;
+    left: 65px;
+    right: 15px;
+    pointer-events: none;
+    z-index: 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    line-height: 20px;
+    padding: 15px;
+    white-space: pre;
+}
+
+.diff-highlight-line {
+    height: 20px;
+    margin: 0;
+    display: block;
+}
+
+.diff-highlight-line.added {
+    background: rgba(40, 167, 69, 0.2);
+    border-left: 3px solid #28a745;
+}
+
+.diff-highlight-line.removed {
+    background: rgba(220, 53, 69, 0.2);
+    border-left: 3px solid #dc3545;
+}
+
+.diff-highlight-line.modified {
+    background: rgba(255, 193, 7, 0.2);
+    border-left: 3px solid #ffc107;
 }
 
 .stats-section {
@@ -452,7 +517,15 @@ textarea.drag-over {
 
 /* 響應式設計 */
 @media (max-width: 768px) {
-    .input-section,
+    .input-section {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .diff-connector {
+        display: none;
+    }
+    
     .diff-container {
         grid-template-columns: 1fr;
     }
@@ -496,6 +569,24 @@ textarea.drag-over {
         right: 10px;
         left: 10px;
         top: 10px;
+    }
+
+    textarea {
+        min-height: 300px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .input-section {
+        grid-template-columns: 1fr 40px 1fr;
+    }
+    
+    .diff-connector {
+        padding-top: 60px;
+    }
+    
+    .diff-line-connector {
+        width: 30px;
     }
 }
 

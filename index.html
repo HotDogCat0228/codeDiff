@@ -46,10 +46,15 @@
                     <span class="file-name" id="fileNameLeft">未選擇文件</span>
                     <button type="button" class="clear-file-btn" id="clearFileLeft" style="display: none;">✕</button>
                 </div>
-                <div class="code-editor">
+                <div class="code-editor" id="codeEditorLeft">
                     <div class="line-numbers" id="lineNumbersLeft"></div>
+                    <div class="diff-highlight" id="diffHighlightLeft"></div>
                     <textarea id="codeLeft" placeholder="在此輸入程式碼或上傳文件..."></textarea>
                 </div>
+            </div>
+            
+            <div class="diff-connector" id="diffConnector">
+                <!-- 動態生成的連接線將在這裡顯示 -->
             </div>
             
             <div class="code-panel">
@@ -77,8 +82,9 @@
                     <span class="file-name" id="fileNameRight">未選擇文件</span>
                     <button type="button" class="clear-file-btn" id="clearFileRight" style="display: none;">✕</button>
                 </div>
-                <div class="code-editor">
+                <div class="code-editor" id="codeEditorRight">
                     <div class="line-numbers" id="lineNumbersRight"></div>
+                    <div class="diff-highlight" id="diffHighlightRight"></div>
                     <textarea id="codeRight" placeholder="在此輸入程式碼或上傳文件..."></textarea>
                 </div>
             </div>
