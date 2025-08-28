@@ -18,6 +18,14 @@ class CodeDiffer {
         this.removedLines = document.getElementById('removedLines');
         this.modifiedLines = document.getElementById('modifiedLines');
         this.unchangedLines = document.getElementById('unchangedLines');
+        
+        // 文件上傳相關元素
+        this.fileInputLeft = document.getElementById('fileInputLeft');
+        this.fileInputRight = document.getElementById('fileInputRight');
+        this.fileNameLeft = document.getElementById('fileNameLeft');
+        this.fileNameRight = document.getElementById('fileNameRight');
+        this.clearFileLeft = document.getElementById('clearFileLeft');
+        this.clearFileRight = document.getElementById('clearFileRight');
     }
 
     attachEventListeners() {
@@ -34,6 +42,15 @@ class CodeDiffer {
         document.getElementById('clearRight').addEventListener('click', () => this.clearCode('right'));
         document.getElementById('clearBoth').addEventListener('click', () => this.clearCode('both'));
         document.getElementById('compare').addEventListener('click', () => this.compareCode());
+        
+        // 文件上傳事件
+        this.fileInputLeft.addEventListener('change', (e) => this.handleFileUpload(e, 'left'));
+        this.fileInputRight.addEventListener('change', (e) => this.handleFileUpload(e, 'right'));
+        this.clearFileLeft.addEventListener('click', () => this.clearFile('left'));
+        this.clearFileRight.addEventListener('click', () => this.clearFile('right'));
+        
+        // 拖拽功能
+        this.setupDragAndDrop();
     }
 
     updateLineNumbers(side = 'both') {
@@ -69,10 +86,12 @@ class CodeDiffer {
         if (side === 'left' || side === 'both') {
             this.codeLeft.value = '';
             this.updateLineNumbers('left');
+            this.clearFile('left');
         }
         if (side === 'right' || side === 'both') {
             this.codeRight.value = '';
             this.updateLineNumbers('right');
+            this.clearFile('right');
         }
         if (side === 'both') {
             this.hideResults();
@@ -263,6 +282,161 @@ class CodeDiffer {
     showResults() {
         this.statsSection.style.display = 'block';
         this.diffSection.style.display = 'block';
+    }
+
+    // 文件上傳處理
+    handleFileUpload(event, side) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // 檢查文件大小 (限制為 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('文件大小不能超過 5MB');
+            event.target.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target.result;
+            if (side === 'left') {
+                this.codeLeft.value = content;
+                this.fileNameLeft.textContent = file.name;
+                this.fileNameLeft.classList.add('has-file');
+                this.clearFileLeft.style.display = 'block';
+                this.updateLineNumbers('left');
+            } else {
+                this.codeRight.value = content;
+                this.fileNameRight.textContent = file.name;
+                this.fileNameRight.classList.add('has-file');
+                this.clearFileRight.style.display = 'block';
+                this.updateLineNumbers('right');
+            }
+        };
+
+        reader.onerror = () => {
+            alert('讀取文件失敗，請重試');
+        };
+
+        reader.readAsText(file);
+    }
+
+    // 清除文件
+    clearFile(side) {
+        if (side === 'left') {
+            this.fileInputLeft.value = '';
+            this.fileNameLeft.textContent = '未選擇文件';
+            this.fileNameLeft.classList.remove('has-file');
+            this.clearFileLeft.style.display = 'none';
+        } else {
+            this.fileInputRight.value = '';
+            this.fileNameRight.textContent = '未選擇文件';
+            this.fileNameRight.classList.remove('has-file');
+            this.clearFileRight.style.display = 'none';
+        }
+    }
+
+    // 設置拖拽功能
+    setupDragAndDrop() {
+        const setupDragEvents = (textarea, side) => {
+            textarea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                textarea.style.background = '#e3f2fd';
+                textarea.style.borderColor = '#2196f3';
+            });
+
+            textarea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                textarea.style.background = '';
+                textarea.style.borderColor = '';
+            });
+
+            textarea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                textarea.style.background = '';
+                textarea.style.borderColor = '';
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    this.processDroppedFile(file, side);
+                }
+            });
+        };
+
+        setupDragEvents(this.codeLeft, 'left');
+        setupDragEvents(this.codeRight, 'right');
+    }
+
+    // 處理拖拽的文件
+    processDroppedFile(file, side) {
+        // 檢查是否為文本文件
+        const textTypes = [
+            'text/', 'application/json', 'application/xml', 
+            'application/javascript', 'application/typescript'
+        ];
+        
+        const isTextFile = textTypes.some(type => 
+            file.type.startsWith(type) || 
+            this.isTextFileExtension(file.name)
+        );
+
+        if (!isTextFile) {
+            alert('請選擇文本或程式文件');
+            return;
+        }
+
+        // 檢查文件大小
+        if (file.size > 5 * 1024 * 1024) {
+            alert('文件大小不能超過 5MB');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target.result;
+            if (side === 'left') {
+                this.codeLeft.value = content;
+                this.fileNameLeft.textContent = file.name;
+                this.fileNameLeft.classList.add('has-file');
+                this.clearFileLeft.style.display = 'block';
+                this.updateLineNumbers('left');
+                // 同步文件輸入框
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                this.fileInputLeft.files = dt.files;
+            } else {
+                this.codeRight.value = content;
+                this.fileNameRight.textContent = file.name;
+                this.fileNameRight.classList.add('has-file');
+                this.clearFileRight.style.display = 'block';
+                this.updateLineNumbers('right');
+                // 同步文件輸入框
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                this.fileInputRight.files = dt.files;
+            }
+        };
+
+        reader.onerror = () => {
+            alert('讀取文件失敗，請重試');
+        };
+
+        reader.readAsText(file);
+    }
+
+    // 檢查文件擴展名
+    isTextFileExtension(filename) {
+        const textExtensions = [
+            '.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.scss', '.less',
+            '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.php', '.rb', '.go',
+            '.rs', '.swift', '.kt', '.scala', '.sh', '.sql', '.json', '.xml',
+            '.yaml', '.yml', '.md', '.txt', '.vue', '.svelte', '.dart',
+            '.r', '.m', '.pl', '.lua', '.vim', '.ini', '.cfg', '.conf'
+        ];
+        
+        const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+        return textExtensions.includes(extension);
     }
 }
 
