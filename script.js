@@ -71,11 +71,27 @@ class CodeDiffer {
 
     updateSingleLineNumbers(textarea, lineNumbersDiv) {
         const lines = textarea.value.split('\n').length;
-        const lineNumbers = [];
+        
+        // 清空現有內容
+        lineNumbersDiv.innerHTML = '';
+        
+        // 為每行創建一個 div 元素，確保垂直排列
         for (let i = 1; i <= lines; i++) {
-            lineNumbers.push(i);
+            const lineDiv = document.createElement('div');
+            lineDiv.textContent = i;
+            lineDiv.style.height = '20px';
+            lineDiv.style.lineHeight = '20px';
+            lineNumbersDiv.appendChild(lineDiv);
         }
-        lineNumbersDiv.textContent = lineNumbers.join('\n');
+        
+        // 備用方案：如果 DOM 方法失敗，使用文字方式
+        if (lineNumbersDiv.children.length === 0) {
+            const lineNumbers = [];
+            for (let i = 1; i <= lines; i++) {
+                lineNumbers.push(i);
+            }
+            lineNumbersDiv.textContent = lineNumbers.join('\n');
+        }
     }
 
     syncScroll(source) {

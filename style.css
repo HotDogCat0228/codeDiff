@@ -255,8 +255,20 @@ header h1 {
     border-right: 1px solid #dee2e6;
     min-width: 50px;
     user-select: none;
-    white-space: pre-line;
+    white-space: pre;
+    word-wrap: break-word;
     overflow: hidden;
+    display: block;
+}
+
+.line-numbers div {
+    display: block;
+    height: 20px;
+    line-height: 20px;
+    margin: 0;
+    padding: 0;
+    text-align: right;
+    white-space: nowrap;
 }
 
 textarea {
